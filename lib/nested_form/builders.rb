@@ -4,7 +4,7 @@ module NestedForm
 
     autoload :Base
     autoload :FormBuilder
-    autoload :SimpleFormBuilder if defined?(::SimpleForm)
-    autoload :FormtasticFormBuilder if defined?(::Formtastic)
+    autoload :SimpleFormBuilder
+    autoload :FormtasticFormBuilder
   end
 end

@@ -3,7 +3,7 @@ module NestedForm
     extend ActiveSupport::Autoload
 
     autoload :FormHelper
-    autoload :SimpleFormHelper if defined?(::SimpleForm)
-    autoload :FormtasticFormHelper if defined?(::Formtastic)
+    autoload :SimpleFormHelper
+    autoload :FormtasticFormHelper
   end
 end
