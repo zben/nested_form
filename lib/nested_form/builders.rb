@@ -1,27 +1,10 @@
-require 'nested_form/builder_mixin'
-
 module NestedForm
-  class Builder < ::ActionView::Helpers::FormBuilder
-    include ::NestedForm::BuilderMixin
-  end
+  module Builders
+    extend ActiveSupport::Autoload
 
-  begin
-    require 'simple_form'
-    class SimpleBuilder < ::SimpleForm::FormBuilder
-      include ::NestedForm::BuilderMixin
-    end
-  rescue LoadError
-  end
-
-  begin
-    require 'formtastic'
-
-    # Formtastic 1.x compatibility
-    ::Formtastic::FormBuilder = ::Formtastic::SemanticFormBuilder unless defined?(::Formtastic::FormBuilder)
-    
-    class FormtasticBuilder < ::Formtastic::FormBuilder
-      include ::NestedForm::BuilderMixin
-    end
-  rescue LoadError
+    autoload :Base
+    autoload :FormBuilder
+    autoload :SimpleFormBuilder if defined?(::SimpleForm)
+    autoload :FormtasticFormBuilder if defined?(::Formtastic)
   end
 end

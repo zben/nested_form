@@ -1,6 +1,6 @@
-require "spec_helper"
+require 'spec_helper'
 
-describe NestedForm::ViewHelper do
+describe NestedForm::Helpers::SimpleFormHelper do
   include RSpec::Rails::HelperExampleGroup
   
   before(:each) do
@@ -11,29 +11,15 @@ describe NestedForm::ViewHelper do
 
   it "should pass nested form builder to form_for along with other options" do
     pending
-    mock.proxy(_view).form_for(:first, :as => :second, :other => :arg, :builder => NestedForm::Builder) do |form_html|
+    mock.proxy(_view).form_for(:first, :as => :second, :other => :arg, :builder => NestedForm::Builders::SimpleFormBuilder) do |form_html|
       form_html
     end
     _view.nested_form_for(:first, :as => :second, :other => :arg) {"form"}
   end
 
   it "should pass instance of NestedForm::Builder to nested_form_for block" do
-    _view.nested_form_for(Project.new) do |f|
-      f.should be_instance_of(NestedForm::Builder)
-    end
-  end
-
-  it "should pass instance of NestedForm::SimpleBuilder to simple_nested_form_for block" do
     _view.simple_nested_form_for(Project.new) do |f|
-      f.should be_instance_of(NestedForm::SimpleBuilder)
-    end
-  end
-
-  if defined?(NestedForm::FormtasticBuilder)
-    it "should pass instance of NestedForm::FormtasticBuilder to semantic_nested_form_for block" do
-      _view.semantic_nested_form_for(Project.new) do |f|
-        f.should be_instance_of(NestedForm::FormtasticBuilder)
-      end
+      f.should be_instance_of(NestedForm::Builders::SimpleFormBuilder)
     end
   end
 
