@@ -1,68 +1,97 @@
 module NestedForm
   module Builders
     module Base
-      # Adds a link to insert a new associated records. The first argument is the name of the link, the second is the name of the association.
-      #
-      #   f.link_to_add("Add Task", :tasks)
-      #
-      # You can pass HTML options in a hash at the end and a block for the content.
-      #
-      #   <%= f.link_to_add(:tasks, :class => "add_task", :href => new_task_path) do %>
-      #     Add Task
-      #   <% end %>
-      #
-      # See the README for more details on where to call this method.
-      def link_to_add(*args, &block)
-        options = args.extract_options!.symbolize_keys
-        association = args.pop
-        options[:class] = [options[:class], "add_nested_fields"].compact.join(" ")
-        options["data-association"] = association
-        args << (options.delete(:href) || "javascript:void(0)")
-        args << options
-        @fields ||= {}
-        @template.after_nested_form(association) do
-          model_object = object.class.reflect_on_association(association).klass.new
-          output = %Q[<div id="#{association}_fields_blueprint" style="display: none">].html_safe
-          output << fields_for(association, model_object, :child_index => "new_#{association}", &@fields[association])
-          output.safe_concat('</div>')
-          output
-        end
-        @template.link_to(*args, &block)
+      extend ActiveSupport::Concern
+
+      included do
+        class_attribute :wrapper_tags, :wrapper_options
+        self.wrapper_tags = HashWithIndifferentAccess.new
+        self.wrapper_options = HashWithIndifferentAccess.new
+        self.wrapper_options.default = {}
+
+        wrap :add_button, :div, {:class => 'nested-form button add'}        
+        wrap :remove_button, :div, {:class => 'nested-form button remove'}
+        wrap :inputs, :div, {:class => 'nested-form inputs'}
+        wrap :blueprint, :div, {:style => 'display:none'}
       end
 
-      # Adds a link to remove the associated record. The first argment is the name of the link.
-      #
-      #   f.link_to_remove("Remove Task")
-      #
-      # You can pass HTML options in a hash at the end and a block for the content.
-      #
-      #   <%= f.link_to_remove(:class => "remove_task", :href => "#") do %>
-      #     Remove Task
-      #   <% end %>
-      #
-      # See the README for more details on where to call this method.
-      def link_to_remove(*args, &block)
-        options = args.extract_options!.symbolize_keys
-        options[:class] = [options[:class], "remove_nested_fields"].compact.join(" ")
-        args << (options.delete(:href) || "javascript:void(0)")
-        args << options
-        hidden_field(:_destroy) + @template.link_to(*args, &block)
+      module ClassMethods
+        def wrap(item, tag, options={})
+          self.wrapper_tags[item] = tag
+          self.wrapper_options[item] = options.merge(self.wrapper_options[item])
+        end
+      end
+
+      attr_reader :template
+
+      def button_to_add(association, *args, &block)
+        template.after_nested_form(association) { blueprint(association) }
+        
+        options = args.extract_options!.merge({:"data-association" => association})
+        wrap(:add_button, *(args << options), &block)
+      end
+
+      def button_to_remove(*args, &block)        
+        wrap(:remove_button, *args, &block)
       end
 
       def fields_for_with_nested_attributes(association_name, *args)
         # TODO Test this better
-        block = args.pop || Proc.new { |fields| @template.render(:partial => "#{association_name.to_s.singularize}_fields", :locals => {:f => fields}) }
+        block = args.pop || lambda { |builder| template.render("#{association_name.to_s.singularize}_inputs", :f => builder) }
         @fields ||= {}
         @fields[association_name] = block
         super(association_name, *(args << block))
       end
 
       def fields_for_nested_model(name, object, options, block)
-        output = '<div class="fields">'.html_safe
-        output << super
-        output.safe_concat('</div>')
-        output
+        wrap(:inputs) { super }
       end
+
+      def content_tag(tag, content, options)
+        if tag.nil?
+          content
+        else
+          template.content_tag(tag, content, options)
+        end
+      end
+
+      protected
+
+        def wrap(item, content={}, options={}, &block)
+          if block_given?
+            options = content
+            content = block.call
+          end
+
+          default_wrapper = self.wrapper_options[item]
+          wrapper = options.delete(:wrapper) || {}
+          wrapper[:class] = "#{default_wrapper[:class]} #{wrapper[:class]}".strip.presence
+          wrapper.reverse_merge!(default_wrapper.symbolize_keys)
+
+          content_tag(self.wrapper_tags[item], send("#{item}_content", content, options), wrapper)
+        end
+
+        def add_button_content(content, options)
+          content_tag(:button, content, options.reverse_merge(:type => 'button'))
+        end
+
+        def remove_button_content(content, options)
+          hidden_field(:_destroy) + content_tag(:button, content, options.reverse_merge(:type => 'button'))
+        end
+
+        def inputs_content(content, options)
+          content
+        end
+
+        def blueprint_content(association, options)
+          @fields ||= {}
+          new_record = object.class.reflect_on_association(association).klass.new
+          fields_for(association, new_record, :child_index => "new_#{association}", &@fields[association])
+        end
+
+        def blueprint(association)         
+          wrap(:blueprint, association, {:wrapper => {:id => "#{association}_blueprint"}})
+        end
     end
   end
 end

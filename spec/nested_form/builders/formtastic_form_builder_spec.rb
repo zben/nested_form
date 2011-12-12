@@ -1,40 +1,30 @@
 require 'spec_helper'
 
 describe NestedForm::Builders::FormtasticFormBuilder do
-  subject { NestedForm::Builders::FormtasticFormBuilder.new(:item, project, template, options, proc {}) }
+  it_behaves_like "a nested form builder" do
+    let(:builder) { NestedForm::Builders::FormtasticFormBuilder }
 
-  let(:project) { Project.new }
-  let(:template) { ActionView::Base.new }
+    let(:add_button_wrapper) { :li }
+    let(:remove_button_wrapper) { :li }
+    let(:inputs_wrapper) { :li }
+    let(:blueprint_wrapper) { :ol }
 
-  before { template.output_buffer = ""}
+    describe "#inputs" do
+      before { subject.instance_variable_set(:@already_in_an_inputs_block, true) }
 
-  describe "with no options" do
-    let(:options) { {} }
+      context "when for is given" do
+        it "doesn't wrap output" do
+          subject.stubs(:inputs_for_nested_attributes).returns('inputs')
+          subject.inputs(:for => :tasks).should == 'inputs'
+        end
+      end
 
-    it "has an add link which behaves similar to a Rails link_to" do
-      subject.link_to_add("Add", :tasks).should == '<a href="javascript:void(0)" class="add_nested_fields" data-association="tasks">Add</a>'
-      subject.link_to_add("Add", :tasks, :class => "foo", :href => "url").should == '<a href="url" class="foo add_nested_fields" data-association="tasks">Add</a>'
-      subject.link_to_add(:tasks) { "Add" }.should == '<a href="javascript:void(0)" class="add_nested_fields" data-association="tasks">Add</a>'
-    end
-
-    it "has a remove link which behaves similar to a Rails link_to" do
-      subject.link_to_remove("Remove").should == '<input id="item__destroy" name="item[_destroy]" type="hidden" value="false" /><a href="javascript:void(0)" class="remove_nested_fields">Remove</a>'
-      subject.link_to_remove("Remove", :class => "foo", :href => "url").should == '<input id="item__destroy" name="item[_destroy]" type="hidden" value="false" /><a href="url" class="foo remove_nested_fields">Remove</a>'
-      subject.link_to_remove { "Remove" }.should == '<input id="item__destroy" name="item[_destroy]" type="hidden" value="false" /><a href="javascript:void(0)" class="remove_nested_fields">Remove</a>'
-    end
-
-    it "should wrap nested fields each in a div with class" do
-      2.times { project.tasks.build }
-      subject.fields_for(:tasks) {"Task"}.should == '<div class="fields">Task</div><div class="fields">Task</div>'
-    end
-
-    it "should add task fields to hidden div after form" do
-      pending
-      output = ""
-      mock(@template).after_nested_form(:tasks) { |arg, block| output << block.call }
-      subject.fields_for(:tasks) { "Task" }
-      subject.link_to_add("Add", :tasks)
-      output.should == '<div id="tasks_fields_blueprint" style="display: none"><div class="fields">Task</div></div>'
+      context "when for is not given" do
+        it "still wraps output" do
+          subject.stubs(:field_set_and_list_wrapping).returns('inputs')
+          subject.inputs{}.should == '<li class="input">inputs</li>'
+        end
+      end
     end
   end
 end 

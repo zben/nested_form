@@ -1,9 +1,9 @@
 module NestedForm
   module Helpers
     module FormHelper
-      def nested_form_for(*args, &block)
+      def nested_form_for(record, *args, &block)
         options = args.extract_options!.reverse_merge(:builder => NestedForm::Builders::FormBuilder)
-        form_for(*(args << options), &block) << after_nested_form_callbacks
+        form_for(record, *(args << options), &block) << after_nested_form_callbacks
       end
 
       def after_nested_form(association, &block)
@@ -18,9 +18,7 @@ module NestedForm
       private
         def after_nested_form_callbacks
           @after_nested_form_callbacks ||= []
-          fields = @after_nested_form_callbacks.map do |callback|
-            callback.call
-          end
+          fields = @after_nested_form_callbacks.map(&:call)
           fields.join(" ").html_safe
         end
     end

@@ -9,25 +9,24 @@ describe NestedForm::Helpers::SimpleFormHelper do
     end
   end
 
-  it "should pass nested form builder to form_for along with other options" do
-    pending
-    mock.proxy(_view).form_for(:first, :as => :second, :other => :arg, :builder => NestedForm::Builders::SimpleFormBuilder) do |form_html|
-      form_html
+  describe "#simple_nested_form_for" do
+    it "delegates to form_for" do
+      _view.expects(:simple_form_for).with(:first, :as => :second, :other => :arg, :builder => NestedForm::Builders::SimpleFormBuilder).returns("")
+      _view.simple_nested_form_for(:first, :as => :second, :other => :arg) {}
     end
-    _view.nested_form_for(:first, :as => :second, :other => :arg) {"form"}
-  end
 
-  it "should pass instance of NestedForm::Builder to nested_form_for block" do
-    _view.simple_nested_form_for(Project.new) do |f|
-      f.should be_instance_of(NestedForm::Builders::SimpleFormBuilder)
+    it "passes the correct form builder to its block" do
+      _view.simple_nested_form_for(Project.new) do |f|
+        f.should be_a(NestedForm::Builders::SimpleFormBuilder)
+      end
     end
-  end
 
-  it "should append content to end of nested form" do
-    _view.after_nested_form(:tasks) { _view.concat("123") }
-    _view.after_nested_form(:milestones) { _view.concat("456") }
-    _view.nested_form_for(Project.new) {}
-    _view.output_buffer.should include("123456")
+    it "appends content after nested form" do
+      _view.after_nested_form(:tasks) { _view.concat("123") }
+      _view.after_nested_form(:milestones) { _view.concat("456") }
+      _view.simple_nested_form_for(Project.new) {}
+      _view.output_buffer.should include("123456")
+    end
   end
 end
 
