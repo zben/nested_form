@@ -1,4 +1,4 @@
-require 'nested_form/railtie' if defined?(::Rails)
+require 'nested_form/rails' if defined?(::Rails)
 
 module NestedForm
   extend ActiveSupport::Autoload

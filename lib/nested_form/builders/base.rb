@@ -35,12 +35,12 @@ module NestedForm
         wrap(:remove_button, *args, &block)
       end
 
-      def fields_for_with_nested_attributes(association_name, *args)
+      def fields_for_with_nested_attributes(association_name, association, options, block)
         # TODO Test this better
-        block = args.pop || lambda { |builder| template.render("#{association_name.to_s.singularize}_inputs", :f => builder) }
+        block ||= lambda {|builder| template.render("#{association_name.to_s.singularize}_inputs", :f => builder) }
         @fields ||= {}
         @fields[association_name] = block
-        super(association_name, *(args << block))
+        super
       end
 
       def fields_for_nested_model(name, object, options, block)
