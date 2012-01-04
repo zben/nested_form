@@ -6,6 +6,8 @@ jQuery ($) ->
     content = content.replace(new RegExp("new_#{association}", 'g'), "new_#{new Date().getTime()}")
 
     added = $(content).insertBefore($(this).closest('.nested-form.add'))
+    $(":input:visible:enabled:first", added).focus()
+    
     $(this).closest('form').trigger(type: 'nested:added', field: added)
 
     return false
